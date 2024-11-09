@@ -96,14 +96,9 @@ def post_transactions_to_ynab(batch):
 
 def import_transactions():
     transactions = get_splitwise_transactions()
-    for transaction in transactions:
-        formatted_for_ynab = format_for_ynab(transaction)
-        print("----------------------------------------------------")
-        print(f"Original transaction {transaction}" )
-        print(f"Ynab formatted transaction {formatted_for_ynab}" )
-        print("----------------------------------------------------")
-
+    print(f"Transactions from Splitwise {transactions}")
     ynab_transactions = [format_for_ynab(transaction) for transaction in transactions]
+    print(f"Transactions for ynab {ynab_transactions}")
 
     post_transactions_to_ynab(ynab_transactions)
 
