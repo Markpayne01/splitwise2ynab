@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 
@@ -21,16 +21,24 @@ YNAB_API_URL = f'https://api.youneedabudget.com/v1/budgets/{YNAB_BUDGET_ID}/tran
 # Timezone settings
 TIMEZONE = pytz.timezone("UTC")  # Set to your timezone if needed
 
-def get_splitwise_transactions(limit=10):
+def get_splitwise_transactions(limit=10, days_ago=2):
     """
-    Retrieve transactions from Splitwise with an optional limit on the number of transactions.
+    Retrieve transactions from Splitwise with a limit and filter for transactions dated after a specific date.
+    
+    Parameters:
+    - limit: Number of transactions to retrieve.
+    - days_ago: Number of days in the past for the 'dated_after' filter (default is 2 days).
     """
     headers = {
         'Authorization': f'Bearer {SPLITWISE_API_KEY}',
         'Content-Type': 'application/json'
     }
+    date_threshold = (datetime.now() - timedelta(days=days_ago)).date().isoformat()
+
     params = {
-        'limit': limit  # Set the number of transactions to retrieve
+        'limit': limit,  # Set the number of transactions to retrieve
+        'dated_after': date_threshold  # Set the date filter for transactions
+
     }
     
     response = requests.get(SPLITWISE_API_URL, headers=headers, params=params)
@@ -50,7 +58,6 @@ def format_for_ynab(transaction):
     amount = None
     for user in transaction['users']:
         if user['user']['id'] == SPLITWISE_USER_ID: 
-            print("user id mateches")
             amount = user['net_balance']
 
     # YNAB expects milliunits, so convert net_balance to milliunits
@@ -67,7 +74,7 @@ def format_for_ynab(transaction):
         "payee_name": description,
         "memo": f"Imported from Splitwise: {description}",
         "cleared": "cleared",
-        "approved": True
+        "approved": False
     }
 
 
@@ -83,9 +90,9 @@ def post_transactions_to_ynab(batch):
     response = requests.post(YNAB_API_URL, headers=headers, json=payload)
 
     if response.status_code == 201:
-        print(f"Batch of {len(batch)} transactions imported successfully.")
+        print(f"{len(batch)} transactions imported successfully.")
     else:
-        print(f"Failed to import batch: {response.status_code} {response.text}")
+        print(f"Failed to import: {response.status_code} {response.text}")
 
 def import_transactions():
     transactions = get_splitwise_transactions()
