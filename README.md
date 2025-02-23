@@ -14,7 +14,6 @@
     You need to configure the following environment variables for the script to work:
     
     - `SPLITWISE_API_KEY`: Your Splitwise API key.
-    - `SPLITWISE_USER_ID`: Your unique Splitwise user ID, this is used to select your net_balance out of a splitwise transaction,  
     - `YNAB_ACCESS_TOKEN`: Your YNAB API access token.
     - `YNAB_BUDGET_ID`: The ID of your YNAB budget.
     - `YNAB_ACCOUNT_ID`: The ID of the YNAB account where you want to import transactions.
