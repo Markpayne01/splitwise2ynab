@@ -1,6 +1,6 @@
 # Splitwise to YNAB Integration
 
- A Python script to integrate Splitwise with YNAB (You Need A Budget). The script retrieves the last 2 days of expenses from your Splitwise account, formats them to match YNAB's transaction format, and imports them into your YNAB budget.
+ A Python script to integrate Splitwise with YNAB (You Need A Budget). The script retrieves recent expenses from your Splitwise account, formats them to match YNAB's transaction format, and imports them into your YNAB budget.
 
 ## Features
 
