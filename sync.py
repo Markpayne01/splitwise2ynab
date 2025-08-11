@@ -39,7 +39,7 @@ def get_splitwise_transactions(limit=10, days_ago=2):
     
     Parameters:
     - limit: Number of transactions to retrieve.
-    - updated_after: Number of days in the past for the 'updated_after' filter (default is 2 days).
+    - days_ago: Number of days in the past for the 'updated_after' filter (default is 2 days).
     """
     headers = {
         'Authorization': f'Bearer {SPLITWISE_API_KEY}',
