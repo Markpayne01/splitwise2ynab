@@ -62,27 +62,63 @@ def get_splitwise_transactions(limit=10, days_ago=2):
         print(f"Failed to fetch transactions from Splitwise: {response.status_code}")
         return []
 
-def format_for_ynab(transaction,user_id):
+def format_for_ynab(transaction, user_id):
     """
     Format Splitwise transaction data for YNAB based on the net_balance for the specific user.
+    Payee is the counterparty (who you owe / who owes you). Memo includes 'paid by' and brief context.
     """
-    # Find the net balance of the logged in user for this transaction. 
+
+    # Find the net balance of the logged in user for this transaction.
     amount = None
-    for user in transaction['users']:
-        if user['user']['id'] == user_id: 
-            amount = user['net_balance']
+    for u in transaction["users"]:
+        if u["user"]["id"] == user_id:
+            amount = u["net_balance"]
+            break
+
+    # Identify counterparties
+    others = []
+    for u in transaction["users"]:
+        if u["user"]["id"] == user_id:
+            continue
+        first = u["user"].get("first_name", "")
+        last = u["user"].get("last_name", "")
+        name = " ".join(x for x in [first, last] if x).strip()
+        others.append(name or str(u["user"]["id"]))
+
+    if len(others) == 1:
+        payee_name = f"{others[0]} (Splitwise)"
+    elif len(others) > 1:
+        payee_name = "Multiple people (Splitwise)"
+    else:
+        payee_name = "Splitwise"
+
+    # Determine payer(s): anyone with paid_share > 0
+    payers = []
+    for u in transaction["users"]:
+        try:
+            if float(u.get("paid_share", "0") or "0") > 0:
+                first = u["user"].get("first_name", "")
+                last = u["user"].get("last_name", "")
+                name = " ".join(x for x in [first, last] if x).strip()
+                payers.append(name or str(u["user"]["id"]))
+        except (TypeError, ValueError):
+            continue
+
+    paid_by_text = ", ".join(payers) if payers else "unknown"
+
+    # Keep description as the human label in memo, plus payer context
+    memo = f"Splitwise: {transaction['description']} | paid by {paid_by_text}"
 
     return {
         "account_id": YNAB_ACCOUNT_ID,
-        "import_id": transaction['id'],
-        "date": transaction['date'],
+        "import_id": transaction["id"],
+        "date": transaction["date"],
         "amount": int(float(amount) * 1000),
-        "payee_name": transaction['description'],
-        "memo": f"Imported from Splitwise: {transaction['description']}",
+        "payee_name": payee_name,
+        "memo": memo,
         "cleared": "cleared",
         "approved": False
     }
-
 
 def post_transactions_to_ynab(batch):
     headers = {
