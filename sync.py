@@ -12,6 +12,7 @@ YNAB_BUDGET_ID = os.getenv('YNAB_BUDGET_ID')
 YNAB_ACCOUNT_ID = os.getenv('YNAB_ACCOUNT_ID') 
 SPLITWISE_DEFAULT_PERSON_NAME = os.getenv('SPLITWISE_DEFAULT_PERSON_NAME')
 YNAB_SPLITWISE_FLAG_COLOR = os.getenv('YNAB_SPLITWISE_FLAG_COLOR', 'yellow').strip().lower()
+YNAB_SPLITWISE_SYNCED_FLAG_COLOR = os.getenv('YNAB_SPLITWISE_SYNCED_FLAG_COLOR', '').strip().lower()
 YNAB_SPLITWISE_DRY_RUN = os.getenv('YNAB_SPLITWISE_DRY_RUN', 'false').strip().lower() in ('1', 'true', 'yes')
 
 # API endpoints
@@ -249,12 +250,16 @@ def create_splitwise_expense(payload):
     return expenses[0].get("id")
 
 
-def clear_ynab_flag(transaction_id):
+def update_ynab_flag_after_sync(transaction_id):
     patch_url = f"{YNAB_TRANSACTIONS_API_URL}/{transaction_id}"
-    payload = {"transaction": {"flag_color": None}}
+    post_sync_flag = YNAB_SPLITWISE_SYNCED_FLAG_COLOR or None
+    payload = {"transaction": {"flag_color": post_sync_flag}}
     response = requests.patch(patch_url, headers=ynab_headers(), json=payload)
     if response.status_code != 200:
-        print(f"Failed to clear flag in YNAB for transaction {transaction_id}: {response.status_code} {response.text}")
+        print(
+            f"Failed to update flag in YNAB for transaction {transaction_id}: "
+            f"{response.status_code} {response.text}"
+        )
         return False
     return True
 
@@ -299,11 +304,12 @@ def sync_ynab_flagged_transactions_to_splitwise():
         if expense_id is None:
             continue
 
-        if clear_ynab_flag(tx.get("id")):
+        if update_ynab_flag_after_sync(tx.get("id")):
             created_count += 1
+            post_sync_flag_text = YNAB_SPLITWISE_SYNCED_FLAG_COLOR or "cleared flag"
             print(
                 f"Created Splitwise expense {expense_id} from YNAB transaction {tx.get('id')} "
-                f"and cleared the YNAB flag."
+                f"and set YNAB flag to '{post_sync_flag_text}'."
             )
 
     if YNAB_SPLITWISE_DRY_RUN:

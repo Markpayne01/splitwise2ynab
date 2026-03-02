@@ -20,6 +20,7 @@
     - `YNAB_ACCOUNT_ID`: The ID of the YNAB account where you want to import transactions.
     - `SPLITWISE_DEFAULT_PERSON_NAME`: The Splitwise friend name to use for new 50:50 expenses created from flagged YNAB transactions.
     - `YNAB_SPLITWISE_FLAG_COLOR`: YNAB flag color that triggers Splitwise creation (default: `yellow`).
+    - `YNAB_SPLITWISE_SYNCED_FLAG_COLOR`: Optional flag color to set after successful sync (for example `blue`). If unset, the trigger flag is cleared.
     - `YNAB_SPLITWISE_LOOKBACK_DAYS`: Only process flagged YNAB transactions within this many recent days (default: `7`).
     - `YNAB_SPLITWISE_DRY_RUN`: If `true`, print what would be created without creating Splitwise expenses or clearing YNAB flags.
 
@@ -28,7 +29,7 @@
 - When an outflow transaction in any on-budget, open YNAB account is flagged with `YNAB_SPLITWISE_FLAG_COLOR`, the script creates a Splitwise expense.
 - The expense is split 50:50 between your Splitwise user and `SPLITWISE_DEFAULT_PERSON_NAME`.
 - Only transactions within `YNAB_SPLITWISE_LOOKBACK_DAYS` are considered.
-- The script then clears the YNAB flag so the same transaction is not recreated on the next run.
+- After successful sync, the script sets `YNAB_SPLITWISE_SYNCED_FLAG_COLOR` if configured; otherwise it clears the YNAB flag.
 - After that, normal Splitwise -> YNAB import behavior continues unchanged.
 
 Recommended first run:
